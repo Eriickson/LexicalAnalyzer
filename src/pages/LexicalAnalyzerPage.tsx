@@ -18,11 +18,18 @@ export const LexicalAnalyzerPage = () => {
     }));
 
     const result = code.map((line) => {
-      let token = null;
+      let row = null;
       if (isVariableRegex.test(line.content)) {
-        token = detectedVariableType(line.content, line.lineNumber);
+        row = detectedtype(line.content, line.lineNumber);
       }
-      return token;
+
+      console.log(isFuncRegex);
+
+      if (isFuncRegex.test(line.content)) {
+        console.log("Hola");
+      }
+
+      return row;
     });
 
     if (result.includes(null)) {
@@ -58,38 +65,45 @@ export const LexicalAnalyzerPage = () => {
   );
 };
 
-const detectedVariableType = (token: string, lineNumber: number) => {
-  let variableType = null;
-  let value: string | number = token.split(":=")[1].trim();
+const detectedtype = (row: string, lineNumber: number) => {
+  let type = null;
+  let lexema: string | number = row.split(":=")[1].trim();
+  const token = row.split(" ")[1].trim();
 
-  if (/^string/.test(token)) {
-    if (!/^'.*'$/.test(value)) {
+  if (keyWords.includes(token)) {
+    console.log("La variable " + token + " es una palabra reservada");
+
+    return;
+  }
+
+  if (/^string/.test(row)) {
+    if (!/^'.*'$/.test(lexema)) {
       console.log("Error: El valor ingresado no es un string");
     }
-    variableType = "string";
-    value = value.replace(/'/g, "");
-  } else if (/^number/.test(token)) {
-    Number.isNaN(Number(value)) &&
+    type = "string";
+    lexema = lexema.replace(/'/g, "");
+  } else if (/^number/.test(row)) {
+    Number.isNaN(Number(lexema)) &&
       console.log("Error: El valor ingresado no es un numero");
-    variableType = "number";
-    value = Number(value);
-  } else if (/^date/.test(token)) {
-    variableType = "date";
-  } else if (/^bool/.test(token)) {
-    variableType = "bool";
-    if (!["y", "n"].includes(value)) {
+    type = "number";
+    lexema = Number(lexema);
+  } else if (/^date/.test(row)) {
+    type = "date";
+  } else if (/^bool/.test(row)) {
+    type = "bool";
+    if (!["y", "n"].includes(lexema)) {
       console.log("Error: El valor ingresado no es un booleano");
       return;
     }
-    variableType = "bool";
+    type = "bool";
   }
 
   return {
-    variableType,
-    token,
-    value,
+    type,
+    row,
+    value: lexema,
     lineNumber,
-    identifier: token.split(" ")[1].trim(),
+    token,
   };
 };
 
@@ -100,4 +114,33 @@ enum variablesType {
   "bool",
 }
 
-const isVariableRegex = /\b(string|number|date|bool)\b ([^\s]+) := .*/;
+const types = "(string|number|date|bool)";
+
+const isVariableRegex = new RegExp(`\b${types}\b ([^\s]+) := .*`);
+
+const isFuncRegex = new RegExp(
+  `^func?<\b${types}\b>\s.*\(.*\s\b${types}\b\)\s{`
+);
+
+const keyWords = [
+  "string",
+  "number",
+  "date",
+  "bool",
+  "if",
+  "else",
+  "while",
+  "for",
+  "in",
+  "do",
+  "end",
+  "and",
+  "or",
+  "not",
+  "true",
+  "false",
+  "null",
+  "nil",
+  "func",
+  "return",
+];
